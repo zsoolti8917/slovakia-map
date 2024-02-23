@@ -1,0 +1,5 @@
+.map-container {
+    width: 1200px;
+    margin: 0 auto; /* Centers the container */
+    height: 100vh; /* Adjust the height as per your requirement */
+  }
