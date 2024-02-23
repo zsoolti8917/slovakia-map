@@ -1,6 +1,6 @@
 // src/SlovakiaMap.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, useMap, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -26,7 +26,7 @@ const BoundaryLayer = ({ geojsonData }) => {
 
 // Define a style for the hover effect
 const hoverStyle = {
-  fillColor: 'blue',
+  fillColor: 'red',
   fillOpacity: 0.7,
 };
 
@@ -37,84 +37,115 @@ const normalStyle = {
 };
 
 const DistrictsLayer = ({ data }) => {
-  const [activeDistrict, setActiveDistrict] = useState(null);
+ /* const [activeDistrict, setActiveDistrict] = useState(null);
+  const activeDistrictIdRef = useRef(null);
+
   const map = useMap();
 
   // Function to reset the style of all districts
   const resetActiveDistrict = () => {
-    if (activeDistrict) {
-      activeDistrict.setStyle(normalStyle);
-    }
+    map.eachLayer((layer) => {
+      if (layer.feature && layer.feature.properties && layer.feature.properties.NM4 !== activeDistrictIdRef.current) {
+        layer.setStyle(normalStyle);
+      }
+    });
   };
 
-  // Function to handle click event on a district
-  /*
-    const onEachFeature = (feature, layer) => {
-      layer.on({
-        mouseover: (e) => {
-          const layer = e.target;
-          if (layer !== activeDistrict) {
-            layer.setStyle(hoverStyle);
-          }
-        },
-        mouseout: (e) => {
-          const layer = e.target;
-          if (layer !== activeDistrict) {
-            layer.setStyle(normalStyle);
-          }
-        },
-        click: (e) => {
-          const clickedLayer = e.target;
-          resetActiveDistrict();
-          clickedLayer.setStyle(hoverStyle);
-          setActiveDistrict(clickedLayer);
-          console.log(clickedLayer.feature.properties.NM4);
 
-          // Automatically adjust the map zoom to the clicked district
-          const bounds = clickedLayer.getBounds();
-          map.fitBounds(bounds); // Leaflet automatically calculates the best zoom level
+  useEffect(() => {
+    console.log('Active District1:', activeDistrictIdRef.current);
+    console.log('Active District2:', activeDistrictIdRef);
+
+    if (activeDistrict) {
+      activeDistrict.setStyle(hoverStyle);
+    }
+  }, [activeDistrict]);
+
+
+  const onEachFeature = (feature, layer) => {
+    const districtId = feature.properties.NM4;
+    
+    layer.on({
+      mouseover: (e) => {
+        const layer = e.target;
+        if (districtId !== activeDistrictIdRef.current) {
+          layer.setStyle(hoverStyle);
+        }
+      },
+      mouseout: (e) => {
+        const layer = e.target;
+        if (districtId !== activeDistrictIdRef.current) {
+          layer.setStyle(normalStyle);
+        }
+      },
+    click: (e) => {
+      const clickedLayer = e.target;
+
+      resetActiveDistrict();
+
+      setActiveDistrict(clickedLayer);
+
+      activeDistrictIdRef.current = districtId;
+
+    console.log('Clicked District ID:', activeDistrictIdRef.current);
+
+      const bounds = clickedLayer.getBounds();
+      const center = bounds.getCenter();
+      map.flyTo(center, map.getZoom(), {
+        animate: true,
+        duration: 0.5 // Duration in seconds, adjust as needed
+      });
+
+      // After the flyTo animation, fit the map to the bounds without animation
+     map.once('moveend', () => {
+        map.fitBounds(bounds, { animate: true, duration: 1});
+        // Ensure active district retains hover style after map adjustments
+        if (activeDistrict) {
+          activeDistrict.setStyle(hoverStyle);
+          console.log(activeDistrict.feature.properties.NM4);
         }
       });
-    };
-  */
+    }
+  });
+};*/
+const activeDistrictRef = useRef(null);
+const map = useMap();
 
-    const onEachFeature = (feature, layer) => {
-      layer.on({
-        mouseover: (e) => {
-          const layer = e.target;
-          if (layer !== activeDistrict) {
-            layer.setStyle(hoverStyle);
-          }
-        },
-        mouseout: (e) => {
-          const layer = e.target;
-          if (layer !== activeDistrict) {
-            layer.setStyle(normalStyle);
-          }
-        },
-        click: (e) => {
-          const clickedLayer = e.target;
-          resetActiveDistrict();
-          clickedLayer.setStyle(hoverStyle);
-          setActiveDistrict(clickedLayer);
-          console.log(clickedLayer.feature.properties.NM4);
-    
-          // Calculate the center and initiate a smooth flyTo transition
-          const bounds = clickedLayer.getBounds();
-          const center = bounds.getCenter();
-          map.flyTo(center, map.getZoom(), {
-            animate: true,
-            duration: 0.5 // Duration in seconds, adjust as needed
-          });
-    
-          // After the flyTo animation, fit the map to the bounds without animation
-          map.once('moveend', () => {
-            map.fitBounds(bounds, { animate: true, duration: 0.5});
-          });
-        }
+const resetActiveDistrict = () => {
+  if (activeDistrictRef.current) {
+    activeDistrictRef.current.setStyle(normalStyle);
+  }
+};
+
+const onEachFeature = (feature, layer) => {
+  layer.on({
+    mouseover: (e) => {
+      const layer = e.target;
+      if (layer !== activeDistrictRef.current) {
+        layer.setStyle(hoverStyle);
+      }
+    },
+    mouseout: (e) => {
+      const layer = e.target;
+      if (layer !== activeDistrictRef.current) {
+        layer.setStyle(normalStyle);
+      }
+    },
+    click: (e) => {
+      const clickedLayer = e.target;
+      resetActiveDistrict();
+      clickedLayer.setStyle(hoverStyle);
+      activeDistrictRef.current = clickedLayer;
+
+      const bounds = clickedLayer.getBounds();
+      const center = bounds.getCenter();
+      map.flyTo(center, map.getZoom(), {
+        animate: true,
+        duration: 0.5 // Duration in seconds, adjust as needed
       });
-    };
-
+    },
+  });
+};
   return (
     <>
       <GeoJSON
@@ -147,7 +178,7 @@ const SlovakiaMap = () => {
 
   return (
     <div className="map-container">
-      <MapContainer center={[48.669, 19.699]} zoom={8} style={{ height: '50vh', width: '100%' }} dragging={false} touchZoom={false} scrollWheelZoom={true} doubleClickZoom={false} zoomControl={false} zoomSnap={0.25}>
+      <MapContainer center={[48.669, 19.699]} zoom={8} style={{ height: '50vh', width: '100%' }} dragging={true} touchZoom={true} scrollWheelZoom={true} doubleClickZoom={false} zoomControl={false} zoomSnap={0.25}>
         {slovakiaData && <BoundaryLayer geojsonData={slovakiaData} />}
         {districtsData && <DistrictsLayer data={districtsData} />}
 
