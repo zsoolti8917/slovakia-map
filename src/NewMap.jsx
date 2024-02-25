@@ -6,7 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import slovakia from './slovakia_corrected.geojson';
 import regions from './corrected_regions.geojson';
-
+import correctedDistricts from './corrected_districts.geojson';
 // Component to apply the boundary canvas using the GeoJSON
 const BoundaryLayer = ({ geojsonData }) => {
   const map = useMap();
@@ -37,47 +37,13 @@ const normalStyle = {
 };
 
 const DistrictsLayer = ({ data }) => {
- /* const [activeDistrict, setActiveDistrict] = useState(null);
-  const activeDistrictIdRef = useRef(null);
+  // Similar implementation to RegionsLayer
+  // Define styles, interaction, etc.
+  
+};
 
-  const map = useMap();
-
-  // Function to reset the style of all districts
-  const resetActiveDistrict = () => {
-    map.eachLayer((layer) => {
-      if (layer.feature && layer.feature.properties && layer.feature.properties.NM4 !== activeDistrictIdRef.current) {
-        layer.setStyle(normalStyle);
-      }
-    });
-  };
-
-
-  useEffect(() => {
-    console.log('Active District1:', activeDistrictIdRef.current);
-    console.log('Active District2:', activeDistrictIdRef);
-
-    if (activeDistrict) {
-      activeDistrict.setStyle(hoverStyle);
-    }
-  }, [activeDistrict]);
-
-
-  const onEachFeature = (feature, layer) => {
-    const districtId = feature.properties.NM4;
-    
-    layer.on({
-      mouseover: (e) => {
-        const layer = e.target;
-        if (districtId !== activeDistrictIdRef.current) {
-          layer.setStyle(hoverStyle);
-        }
-      },
-      mouseout: (e) => {
-        const layer = e.target;
-        if (districtId !== activeDistrictIdRef.current) {
-          layer.setStyle(normalStyle);
-        }
-      },
+const RegionsLayer = ({ data }) => {
+ /*
     click: (e) => {
       const clickedLayer = e.target;
 
@@ -108,12 +74,12 @@ const DistrictsLayer = ({ data }) => {
     }
   });
 };*/
-const activeDistrictRef = useRef(null);
+const activeRegionRef = useRef(null);
 const map = useMap();
 
-const resetActiveDistrict = () => {
-  if (activeDistrictRef.current) {
-    activeDistrictRef.current.setStyle(normalStyle);
+const resetActiveRegion = () => {
+  if (activeRegionRef.current) {
+    activeRegionRef.current.setStyle(normalStyle);
   }
 };
 
@@ -121,21 +87,21 @@ const onEachFeature = (feature, layer) => {
   layer.on({
     mouseover: (e) => {
       const layer = e.target;
-      if (layer !== activeDistrictRef.current) {
+      if (layer !== activeRegionRef.current) {
         layer.setStyle(hoverStyle);
       }
     },
     mouseout: (e) => {
       const layer = e.target;
-      if (layer !== activeDistrictRef.current) {
+      if (layer !== activeRegionRef.current) {
         layer.setStyle(normalStyle);
       }
     },
     click: (e) => {
       const clickedLayer = e.target;
-      resetActiveDistrict();
+      resetActiveRegion();
       clickedLayer.setStyle(hoverStyle);
-      activeDistrictRef.current = clickedLayer;
+      activeRegionRef.current = clickedLayer;
 
       const bounds = clickedLayer.getBounds();
       const center = bounds.getCenter();
@@ -161,26 +127,32 @@ const onEachFeature = (feature, layer) => {
 // Main map component
 const SlovakiaMap = () => {
   const [slovakiaData, setSlovakiaData] = useState(null);
+  const [RegionsData, setRegionsData] = useState(null);
   const [districtsData, setDistrictsData] = useState(null);
-
   useEffect(() => {
     fetch(slovakia)
       .then((response) => response.json())
       .then((data) => setSlovakiaData(data))
       .catch((error) => console.error('Error loading the Slovakia GeoJSON:', error));
 
-    // Adjust the path to your districts' GeoJSON
+    // Adjust the path to your Regions' GeoJSON
     fetch(regions)
       .then((response) => response.json())
+      .then((data) => setRegionsData(data))
+      .catch((error) => console.error('Error loading the Regions GeoJSON:', error));
+
+      fetch(correctedDistricts)
+      .then((response) => response.json())
       .then((data) => setDistrictsData(data))
-      .catch((error) => console.error('Error loading the districts GeoJSON:', error));
+      .catch((error) => console.error('Error loading the Districts GeoJSON:', error));
   }, []);
 
   return (
     <div className="map-container">
       <MapContainer center={[48.669, 19.699]} zoom={8} style={{ height: '50vh', width: '100%' }} dragging={true} touchZoom={true} scrollWheelZoom={true} doubleClickZoom={false} zoomControl={false} zoomSnap={0.25}>
         {slovakiaData && <BoundaryLayer geojsonData={slovakiaData} />}
-        {districtsData && <DistrictsLayer data={districtsData} />}
+        {RegionsData && <RegionsLayer data={RegionsData} />}
+        {districtsData && <DistrictsLayer data={districtsData} />} {/* Render DistrictsLayer */}
 
       </MapContainer>
     </div>
