@@ -30,50 +30,21 @@ const hoverStyle = {
   fillOpacity: 0.7,
 };
 
+const selectedRegionStyle = {
+  fillColor: 'blue',
+  fillOpacity: 0.7,
+};
+
 // Define normal style
 const normalStyle = {
   fillColor: 'white',
   fillOpacity: 0.2,
 };
 
-const DistrictsLayer = ({ data }) => {
-  // Similar implementation to RegionsLayer
-  // Define styles, interaction, etc.
-  
-};
 
-const RegionsLayer = ({ data }) => {
- /*
-    click: (e) => {
-      const clickedLayer = e.target;
 
-      resetActiveDistrict();
+const RegionsLayer = ({ data , setActiveRegionIDN4 }) => {
 
-      setActiveDistrict(clickedLayer);
-
-      activeDistrictIdRef.current = districtId;
-
-    console.log('Clicked District ID:', activeDistrictIdRef.current);
-
-      const bounds = clickedLayer.getBounds();
-      const center = bounds.getCenter();
-      map.flyTo(center, map.getZoom(), {
-        animate: true,
-        duration: 0.5 // Duration in seconds, adjust as needed
-      });
-
-      // After the flyTo animation, fit the map to the bounds without animation
-     map.once('moveend', () => {
-        map.fitBounds(bounds, { animate: true, duration: 1});
-        // Ensure active district retains hover style after map adjustments
-        if (activeDistrict) {
-          activeDistrict.setStyle(hoverStyle);
-          console.log(activeDistrict.feature.properties.NM4);
-        }
-      });
-    }
-  });
-};*/
 const activeRegionRef = useRef(null);
 const map = useMap();
 
@@ -99,6 +70,7 @@ const onEachFeature = (feature, layer) => {
     },
     click: (e) => {
       const clickedLayer = e.target;
+      setActiveRegionIDN4(clickedLayer.feature.properties.IDN4);
       resetActiveRegion();
       clickedLayer.setStyle(hoverStyle);
       activeRegionRef.current = clickedLayer;
@@ -123,12 +95,45 @@ const onEachFeature = (feature, layer) => {
   );
 };
 
+const DistrictsLayer = ({ data, activeRegionIDN4 }) => {
+  const map = useMap();
 
+  useEffect(() => {
+    if (!activeRegionIDN4) return; // Do not display districts if there's no active region IDN4
+
+    const filteredData = {
+      ...data,
+      features: data.features.filter(district => String(district.properties.IDN3)[0] === String(activeRegionIDN4)) // Filter districts by matching the first digit of IDN3 with IDN4 of the active region
+    };
+
+    
+
+    L.geoJSON(filteredData, {
+      style: normalStyle, // Define as needed
+      onEachFeature: (feature, layer) => {
+        // Define interactions if needed
+      }
+    }).addTo(map);
+
+    // Return a cleanup function to remove the layer when the component unmounts or activeRegionIDN4 changes
+    return () => {
+      map.eachLayer(layer => {
+        if (layer.feature && String(layer.feature.properties.IDN3)[0] === String(activeRegionIDN4)) {
+          map.removeLayer(layer);
+        }
+      });
+    };
+  }, [activeRegionIDN4, data, map]);
+
+  return null;
+};
 // Main map component
 const SlovakiaMap = () => {
   const [slovakiaData, setSlovakiaData] = useState(null);
   const [RegionsData, setRegionsData] = useState(null);
   const [districtsData, setDistrictsData] = useState(null);
+  const [activeRegionIDN4, setActiveRegionIDN4] = useState(null); // Now tracking the IDN4 of the active region
+
   useEffect(() => {
     fetch(slovakia)
       .then((response) => response.json())
@@ -151,8 +156,8 @@ const SlovakiaMap = () => {
     <div className="map-container">
       <MapContainer center={[48.669, 19.699]} zoom={8} style={{ height: '50vh', width: '100%' }} dragging={true} touchZoom={true} scrollWheelZoom={true} doubleClickZoom={false} zoomControl={false} zoomSnap={0.25}>
         {slovakiaData && <BoundaryLayer geojsonData={slovakiaData} />}
-        {RegionsData && <RegionsLayer data={RegionsData} />}
-        {districtsData && <DistrictsLayer data={districtsData} />} {/* Render DistrictsLayer */}
+        {RegionsData && <RegionsLayer data={RegionsData} setActiveRegionIDN4={setActiveRegionIDN4} />}
+        {districtsData && activeRegionIDN4 && <DistrictsLayer data={districtsData} activeRegionIDN4={activeRegionIDN4} />}
 
       </MapContainer>
     </div>
