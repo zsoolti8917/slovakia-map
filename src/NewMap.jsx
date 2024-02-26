@@ -97,6 +97,44 @@ const onEachFeature = (feature, layer) => {
 
 const DistrictsLayer = ({ data, activeRegionIDN4 }) => {
   const map = useMap();
+  const activeDistrictRef = useRef(null);
+
+  const resetActiveDistrict = () => {
+    if (activeDistrictRef.current) {
+      activeDistrictRef.current.setStyle(normalStyle); // Revert to normal style
+    }
+  };
+
+  const onEachFeature = (feature, layer) => {
+    layer.on({
+      mouseover: (e) => {
+        const layer = e.target;
+        layer.setStyle(hoverStyle);
+      },
+      mouseout: (e) => {
+        const layer = e.target;
+        if (layer !== activeDistrictRef.current) {
+          layer.setStyle(normalStyle); // Only revert style if it's not the active district
+        }
+      },
+      click: (e) => {
+        const clickedLayer = e.target;
+
+        resetActiveDistrict(); // Reset style of previously active district
+
+        clickedLayer.setStyle({
+          // Define the style for the active district
+          fillColor: 'blue', // Example color, adjust as needed
+          fillOpacity: 1, // Example opacity, adjust as needed
+        });
+
+        activeDistrictRef.current = clickedLayer; // Set the clicked layer as the active district
+
+        const bounds = clickedLayer.getBounds();
+        map.fitBounds(bounds); // Zoom to the district
+      },
+    });
+  };
 
   useEffect(() => {
     if (!activeRegionIDN4) return; // Do not display districts if there's no active region IDN4
@@ -110,9 +148,7 @@ const DistrictsLayer = ({ data, activeRegionIDN4 }) => {
 
     L.geoJSON(filteredData, {
       style: normalStyle, // Define as needed
-      onEachFeature: (feature, layer) => {
-        // Define interactions if needed
-      }
+      onEachFeature: onEachFeature,
     }).addTo(map);
 
     // Return a cleanup function to remove the layer when the component unmounts or activeRegionIDN4 changes
