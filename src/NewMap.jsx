@@ -179,9 +179,9 @@ const CitiesLayer = ({ data, activeDistrictName }) => {
       };
 
       citiesLayer = L.geoJSON(filteredData, {
-        id: 'citiesLayer', // Assign an ID to the layer for easier identification
+        id: 'citiesLayer',
         pointToLayer: (feature, latlng) => {
-          return L.circleMarker(latlng, {
+          const marker = L.circleMarker(latlng, {
             radius: 5,
             fillColor: "#ff7800",
             color: "#000",
@@ -189,21 +189,37 @@ const CitiesLayer = ({ data, activeDistrictName }) => {
             opacity: 1,
             fillOpacity: 0.8
           });
+
+          // Bind a Tooltip with the city's name
+          marker.bindTooltip(feature.properties.name, { permanent: false, direction: 'top', offset: L.point(0, -10) });
+
+          // Event listeners for hover effect
+          marker.on('mouseover', (e) => {
+            const layer = e.target;
+            layer.setStyle({
+              fillColor: "#ffff00", // Change the color on hover
+              fillOpacity: 1, // Adjust the opacity
+            });
+            layer.openTooltip(); // Show the tooltip with the city's name
+          });
+
+          marker.on('mouseout', (e) => {
+            const layer = e.target;
+            layer.setStyle({
+              fillColor: "#ff7800", // Revert to original color
+              fillOpacity: 0.8, // Revert to original opacity
+            });
+            layer.closeTooltip(); // Hide the tooltip
+          });
+
+          return marker;
         }
       }).addTo(map);
     }
 
-    // Cleanup function
     return () => {
       if (citiesLayer) {
         citiesLayer.remove();
-      } else {
-        // If citiesLayer hasn't been defined, remove all city layers
-        map.eachLayer(layer => {
-          if (layer.options && layer.options.id === 'citiesLayer') {
-            map.removeLayer(layer);
-          }
-        });
       }
     };
   }, [activeDistrictName, data, map]);
