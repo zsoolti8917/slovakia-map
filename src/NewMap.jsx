@@ -56,9 +56,12 @@ const resetActiveRegion = () => {
 };
 
 const onEachFeature = (feature, layer) => {
+  layer.bindTooltip(feature.properties.NM4, { permanent: false, direction: 'top', offset: L.point(0, -10) });
+
   layer.on({
     mouseover: (e) => {
       const layer = e.target;
+      layer.openTooltip();
       if (layer !== activeRegionRef.current) {
         layer.setStyle(hoverStyle);
       }
@@ -68,6 +71,7 @@ const onEachFeature = (feature, layer) => {
       if (layer !== activeRegionRef.current) {
         layer.setStyle(normalStyle);
       }
+      layer.closeTooltip();
     },
     click: (e) => {
       const clickedLayer = e.target;
@@ -107,16 +111,20 @@ const DistrictsLayer = ({ data, activeRegionIDN4, setActiveDistrictName }) => {
   };
 
   const onEachFeature = (feature, layer) => {
+    layer.bindTooltip(feature.properties.NM3, { permanent: false, direction: 'top', offset: L.point(0, -10) });
+
     layer.on({
       mouseover: (e) => {
         const layer = e.target;
         layer.setStyle(hoverStyle);
+        layer.openTooltip();
       },
       mouseout: (e) => {
         const layer = e.target;
         if (layer !== activeDistrictRef.current) {
           layer.setStyle(normalStyle); // Only revert style if it's not the active district
         }
+        layer.closeTooltip();
       },
       click: (e) => {
         const clickedLayer = e.target;
